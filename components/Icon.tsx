@@ -4,10 +4,10 @@ import { MaterialIcons } from "@expo/vector-icons";
 
 type IconButtonProps = {
   onPress: () => void;
-  name: keyof typeof MaterialIcons.glyphMap;
+  name: keyof typeof MaterialIcons.glyphMap
   size?: number;
   color?: string;
-  label: string;
+  label?: string;
   buttonStyle?: ViewStyle;
   labelStyle?: TextStyle;                         // Custom styles for the label
 };

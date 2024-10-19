@@ -1,53 +1,161 @@
-import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import {
+  Text,
+  StyleSheet,
+  FlatList,
+  View,
+  ActivityIndicator,
+  TouchableOpacity,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
+} from "react-native";
+import { get } from "../../api/fetch";
+import { Card } from "../../components/Card";
+import { MaterialIcons } from "@expo/vector-icons";
 
-const ToDoScreen: React.FC = () => {
+type ITasksData = {
+  createdAt: string;
+  description: string;
+  id: string;
+  status: string;
+  title: string;
+};
+
+const ToDoScreen: React.FC = ({ navigation }: any) => {
+  const [data, setData] = useState<ITasksData[]>([]);
+  const [page, setPage] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const flatListRef = useRef<FlatList<ITasksData>>(null);
+  const [showButton, setShowButton] = useState(false);
+
+  const scrollToTop = (): void => {
+    if (flatListRef.current) {
+      flatListRef.current.scrollToOffset({ animated: true, offset: 0 });
+    }
+  };
+
+  const handleScroll = (
+    event: NativeSyntheticEvent<NativeScrollEvent>
+  ): void => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+    setShowButton(offsetY > 300);
+  };
+
+  const fetchData = async (pageParam: number) => {
+    if (loading || !hasMore) return; // Prevent fetching if already loading or no more data
+
+    try {
+      const response: any = await get(
+        `/todo-list?status=TODO&offset=${pageParam}&limit=10`
+      );
+
+      if (response.tasks.length > 0 && pageParam !== 2) {
+        setData((prevData) => [...prevData, ...response.tasks]);
+        setPage(response.pageNumber);
+      } else {
+        setHasMore(false); // No more data to load
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const removeTodo = async (id: string) => {
+    setLoading(true);
+
+    setData((prevData) => prevData.filter((item) => item.id !== id));
+
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    setLoading(false);
+  };
+
+  const renderItem = ({ item }: { item: ITasksData }) => (
+    <View style={styles.itemContainer}>
+      <Card
+        headerText={item.createdAt}
+        content={{
+          title: item.title,
+          time: item.createdAt,
+          desc: item.description,
+          remove: () => removeTodo(item.id),
+        }}
+      />
+    </View>
+  );
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("focus", () => {
+      setData([]);
+      setLoading(true);
+      setHasMore(true);
+      setShowButton(false);
+      fetchData(0);
+    });
+
+    return () => unsubscribe();
+  }, [navigation]);
+
   return (
     <View style={styles.container}>
-      <View style={{ justifyContent: "flex-start", alignItems: "flex-start" }}>
-        <Text style={{ fontSize: 30, marginBottom: 10 }}>
-          This is a bordered view!
-        </Text>
-      </View>
-      <View style={styles.box}>
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            paddingBottom: 10,
-          }}
-        >
-          <Text style={styles.text}>Read a book</Text>
-          <Text style={styles.text}>19:30</Text>
+      {loading ? (
+        <ActivityIndicator size="large" color="#0000ff" style={styles.loader} />
+      ) : data.length > 0 ? (
+        <View style={{ flex: 1 }}>
+          <FlatList
+            data={data}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.id}
+            onEndReached={() => fetchData(page)}
+            ref={flatListRef}
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
+          />
+          {showButton && (
+            <TouchableOpacity
+              style={styles.backToTopButton}
+              onPress={scrollToTop}
+            >
+              <MaterialIcons name="arrow-circle-up" size={25} />
+            </TouchableOpacity>
+          )}
         </View>
-        <Text style={styles.text}>This is a bordered view!</Text>
-      </View>
+      ) : (
+        <View style={{ flex: 1, alignSelf: "center" }}>
+          <Text style={styles.notFoundText}>Not found</Text>
+        </View>
+      )}
     </View>
   );
 };
 
+export default ToDoScreen;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    width: "50%",
-    // justifyContent: "center",
-    // alignItems: "center",
+  },
+  itemContainer: {
+    padding: 15,
+    paddingBottom: 5,
+  },
+  loader: {
+    flex: 1,
     alignSelf: "center",
-    padding: 20,
   },
-  box: {
-    width: "100%",
-    flexDirection: "column",
-    justifyContent: "space-between",
-    borderWidth: 2, // Width of the border
-    borderColor: "#6200ee", // Color of the border
-    borderRadius: 10, // Rounded corners (optional)
-    backgroundColor: "#fff", // Background color of the view
-    padding: 20,
+  notFoundText: {
+    textAlign: "center",
+    marginTop: 20,
   },
-  text: {
-    fontSize: 18,
+  backToTopButton: {
+    position: "absolute",
+    bottom: 30,
+    right: 20,
+    backgroundColor: "#DDDDDD",
+    padding: 10,
+    borderRadius: 50,
   },
 });
-
-export default ToDoScreen;
