@@ -9,7 +9,6 @@ import Icon from "../components/Icon";
 const Tab = createBottomTabNavigator();
 
 export default function HomeScreen({ navigation }: any) {
-
   const onPressTab = (routeName: string) => {
     navigation.navigate(routeName);
   };
@@ -43,9 +42,21 @@ export default function HomeScreen({ navigation }: any) {
           tabBarInactiveTintColor: "gray",
         })}
       >
-        <Tab.Screen name="ToDoScreen" component={ToDoScreen} />
-        <Tab.Screen name="DoingScreen" component={DoingScreen} />
-        <Tab.Screen name="DoneScreen" component={DoneScreen} />
+        <Tab.Screen
+          name="ToDoScreen"
+          component={ToDoScreen}
+          options={{ tabBarLabel: "Todo" }}
+        />
+        <Tab.Screen
+          name="DoingScreen"
+          component={DoingScreen}
+          options={{ tabBarLabel: "Doing" }}
+        />
+        <Tab.Screen
+          name="DoneScreen"
+          component={DoneScreen}
+          options={{ tabBarLabel: "Done" }}
+        />
       </Tab.Navigator>
     </View>
   );

@@ -29,6 +29,7 @@ export default function App() {
                 size={35}
                 onPress={() => navigation.navigate("LoginScreen")}
                 label="Sign out"
+                color="gray"
                 buttonStyle={styles.customButton}
               />
             ),

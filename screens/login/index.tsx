@@ -27,8 +27,8 @@ const LoginScreen: React.FC = ({ navigation }: any) => {
       if (username === mockUser.username && password === mockUser.password) {
         Alert.alert("Login Successful", `Welcome ${username}!`);
         navigation.navigate("HomeScreen");
-        // setUsername("");
-        // setPassword("");
+        setUsername("");
+        setPassword("");
       } else {
         Alert.alert("Login Failed", "Invalid username or password");
       }
